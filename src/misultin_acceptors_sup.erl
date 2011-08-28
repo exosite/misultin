@@ -81,8 +81,7 @@ init({MainSupRef, Port, OptionsTcp, AcceptorsPoolsize, RecvTimeout, SocketMode, 
 	case misultin_socket:listen(Port, OptionsTcp, SocketMode) of
 		{ok, ListenSocket} ->
 			Acceptors = [
-				{{acceptor, N}, {misultin_acceptor, start_link, [MainSupRef, ListenSocket, Port, RecvTimeout, SocketMode, CustomOpts]},
-				permanent, brutal_kill, worker, dynamic}
+				{{acceptor, N}, {misultin_acceptor, start_link, [MainSupRef, ListenSocket, Port, RecvTimeout, SocketMode, CustomOpts]}, permanent, brutal_kill, worker, [misultin_acceptor]}
 				|| N <- lists:seq(1, AcceptorsPoolsize)
 			],
 			{ok, {{one_for_one, 5, 10}, Acceptors}};
