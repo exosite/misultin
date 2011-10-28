@@ -306,11 +306,10 @@ parse_post({misultin_req, Req, _SocketPid}) ->
 % Sets resource elements for restful services.
 -spec resource(Options::[term()], reqt()) -> [string()].
 resource(Options, {misultin_req, Req, _SocketPid}) when is_list(Options) ->
-	% clean uri
 	{_UriType, RawUri} = Req#req.uri,
-	Uri = lists:foldl(fun(Option, Acc) -> clean_uri(Option, Acc) end, RawUri, Options),
-	% split
-	string:tokens(Uri, "/").
+	% split and clean uri parts
+	lists:reverse(lists:foldl(fun (Part, Acc) -> [clean_uri(Options, Part) | Acc] end, [], string:tokens(RawUri, "/"))).
+
 
 % ============================ /\ API ======================================================================
 
@@ -319,14 +318,16 @@ resource(Options, {misultin_req, Req, _SocketPid}) when is_list(Options) ->
 % ============================ \/ INTERNAL FUNCTIONS =======================================================
 
 % Clean URI.
--spec clean_uri(Option::atom(), Uri::string()) -> string().
-clean_uri(lowercase, Uri) ->
-	string:to_lower(Uri);
-clean_uri(urldecode, Uri) ->
-	misultin_utility:unquote(Uri);
+-spec clean_uri(Options::list(), UriPart::string()) -> string().
+clean_uri([lowercase | Options], UriPart) ->
+	clean_uri(Options, string:to_lower(UriPart));
+clean_uri([urldecode | Options], UriPart) ->
+	clean_uri(Options, misultin_utility:unquote(UriPart));
 % ignore unexisting option
-clean_uri(_Unavailable, Uri) ->
-	Uri.
+clean_uri([_Unavailable | Options], UriPart) ->
+	clean_uri(Options, UriPart);
+clean_uri([], UriPart) ->
+	UriPart.
 
 % sending of a file
 -spec file_send(FilePath::string(), Headers::http_headers(), reqt()) -> term().
