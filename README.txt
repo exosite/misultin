@@ -71,8 +71,12 @@ API Documentation is available online on the Misultin's wiki: https://github.com
 
 CHANGELOG
 ==========================================================================================================
-0.8:
-       - Misultin has been redesigned to use supervisor behaviours where appropriate, to be more OTP
+0.8.1:
+       - added HTTP Status text in body on error messages
+       - corrected decoding url prior to splitting parts
+       - corrected minor bugs
+
+0.8:   - Misultin has been redesigned to use supervisor behaviours where appropriate, to be more OTP
          compliant
        - added Cookie support
        - added preliminary support multipart/form-data and a file upload example [thanks to Max Lapshin]
