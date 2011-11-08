@@ -732,10 +732,12 @@ list_to_number(L) ->
 % build error message
 -spec build_error_message(HttpCode::non_neg_integer(), Connection::http_connection()) -> iolist().
 build_error_message(HttpCode, Connection) ->
+	Status = misultin_utility:get_http_status_code(HttpCode),
+	BodyBinary = convert_to_binary(Status),
 	% build headers
-	Headers = [{'Content-Length', 0}, {'Connection', Connection}],
+	Headers = add_output_header('Content-Length', {[{'Connection', Connection}, {'Content-Type' ,"text/plain"}], BodyBinary}),
 	Enc_headers = enc_headers(Headers),
 	% build and send response
-	[misultin_utility:get_http_status_code(HttpCode), Enc_headers, <<"\r\n">>].	
-	
+	[Status, Enc_headers, <<"\r\n">>, BodyBinary].
+
 % ============================ /\ INTERNAL FUNCTIONS =======================================================
