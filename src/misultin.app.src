@@ -6,6 +6,7 @@
 		misultin,
 		misultin_acceptor,
 		misultin_acceptors_sup,
+		misultin_cookies,
 		misultin_http,
 		misultin_req,
 		misultin_server,
