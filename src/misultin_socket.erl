@@ -103,7 +103,7 @@ send(Sock, Data, F) ->
 		ok ->
 			ok;
 		{error, _Reason} ->
-			?LOG_ERROR("error sending data: ~p", [_Reason]),
+			?LOG_WARNING("error sending data: ~p", [_Reason]),
 			exit(kill)
 	end.
 

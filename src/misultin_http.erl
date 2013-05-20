@@ -312,8 +312,8 @@ read_body_dispatch(#c{sock = Sock, socket_mode = SocketMode} = C, Req) ->
 			?LOG_WARNING("post request entity too large", []),				
 			misultin_socket:send(Sock, build_error_message(413, close), SocketMode),
 			handle_keepalive(close, C, Req);
-		{error, Reason} ->
-			?LOG_ERROR("tcp error treating post data: ~p, send bad request error back", [Reason]),
+		{error, _Reason} ->
+			?LOG_WARNING("tcp error treating post data: ~p, send bad request error back", [_Reason]),
 			misultin_socket:send(Sock, build_error_message(400, close), SocketMode),
 			handle_keepalive(close, C, Req)
 	end.

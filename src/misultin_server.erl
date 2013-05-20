@@ -218,7 +218,7 @@ handle_info({'DOWN', _Ref, process, _HttpPid, normal}, State) -> {noreply, State
 handle_info({'DOWN', _Ref, process, HttpPid, _Reason}, #state{table_pids_http = TablePidsHttp, table_pids_ws = TablePidsWs, open_connections_count = OpenConnectionsCount} = State) ->
 	case ets:member(TablePidsHttp, HttpPid) of
 		true ->
-			?LOG_ERROR("http process ~p has died with reason: ~p, removing from references of open connections and websockets", [HttpPid, _Reason]),
+			?LOG_WARNING("http process ~p has died with reason: ~p, removing from references of open connections and websockets", [HttpPid, _Reason]),
 			ets:delete(TablePidsHttp, HttpPid),
 			ets:delete(TablePidsWs, HttpPid),
 			{noreply, State#state{open_connections_count = OpenConnectionsCount - 1}};
