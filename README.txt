@@ -71,6 +71,10 @@ API Documentation is available online on the Misultin's wiki: https://github.com
 
 CHANGELOG
 ==========================================================================================================
+0.8.2:
+       - changed several error messages to warnings
+       - fixed uri badmatch crash
+
 0.8.1:
        - added HTTP Status text in body on error messages
        - corrected decoding url prior to splitting parts
