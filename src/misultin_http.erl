@@ -188,29 +188,37 @@ headers(#c{sock = Sock, socket_mode = SocketMode, recv_timeout = RecvTimeout, ws
 			headers(C, Req, H, HeaderCount);
 		{SocketMode, Sock, http_eoh} ->
 			?LOG_DEBUG("received EOH header", []),
-			Headers = lists:reverse(H),
-			{_PathType, Path} = Req#req.uri,
-			% check if it's a websocket request
-			CheckWs = case WsLoop of
-				undefined -> false;
-				_Function -> misultin_websocket:check(Path, Headers)
-			end,
-			case CheckWs of
-				false ->
-					?LOG_DEBUG("normal http request received", []),
-					% build final req with headers, uri and args, and then send to method dispatch
-					case get_uri_and_args(Req#req{headers = Headers}) of
-						{error, HttpErrorCode} ->
-							?LOG_WARNING("error encountered when parsing uri and args: ~p", [HttpErrorCode]),
-							misultin_socket:send(C#c.sock, build_error_message(HttpErrorCode, Req#req.connection), SocketMode),
-							handle_keepalive(Req#req.connection, C, Req);
-						Req0 ->
-							method_dispatch(C, Req0)
+			%% There probably a better way to handle this, but this gets
+			%% rid of the previous req.uri badmatch error on what always appears
+			%% to be a bogus incoming request.
+			case Req#req.uri of
+				{_PathType, Path} ->
+					Headers = lists:reverse(H),
+					% check if it's a websocket request
+					CheckWs = case WsLoop of
+						undefined -> false;
+						_Function -> misultin_websocket:check(Path, Headers)
+					end,
+					case CheckWs of
+						false ->
+							?LOG_DEBUG("normal http request received", []),
+							% build final req with headers, uri and args, and then send to method dispatch
+							case get_uri_and_args(Req#req{headers = Headers}) of
+								{error, HttpErrorCode} ->
+									?LOG_WARNING("error encountered when parsing uri and args: ~p", [HttpErrorCode]),
+									misultin_socket:send(C#c.sock, build_error_message(HttpErrorCode, Req#req.connection), SocketMode),
+									handle_keepalive(Req#req.connection, C, Req);
+								Req0 ->
+									method_dispatch(C, Req0)
+							end;
+						{true, Vsn} ->
+							?LOG_DEBUG("websocket request received", []),
+							misultin_websocket:connect(C#c.server_ref, Req#req{headers = Headers}, #ws{vsn = Vsn, socket = Sock, socket_mode = SocketMode, peer_addr = Req#req.peer_addr, peer_port = Req#req.peer_port, path = Path, ws_autoexit = C#c.ws_autoexit, ws_no_headers = C#c.ws_no_headers}, WsLoop)
 					end;
-				{true, Vsn} ->
-					?LOG_DEBUG("websocket request received", []),
-					misultin_websocket:connect(C#c.server_ref, Req#req{headers = Headers}, #ws{vsn = Vsn, socket = Sock, socket_mode = SocketMode, peer_addr = Req#req.peer_addr, peer_port = Req#req.peer_port, path = Path, ws_autoexit = C#c.ws_autoexit, ws_no_headers = C#c.ws_no_headers}, WsLoop)
-			end;
+				_Other ->
+					misultin_socket:send(C#c.sock, build_error_message(404, close), SocketMode),
+					handle_keepalive(close, C, Req)
+				end;
 		{SocketMode, Sock, _Other} ->
 			?LOG_WARNING("tcp error treating headers: ~p, send bad request error back", [_Other]),
 			misultin_socket:send(Sock, build_error_message(400, Req#req.connection), SocketMode),
